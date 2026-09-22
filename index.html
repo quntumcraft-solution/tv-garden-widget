@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=240,height=320,initial-scale=1,user-scalable=no">
+
+<title>TV Garden</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 240px;
+    height: 320px;
+    overflow: hidden;
+    background: #000;
+}
+
+#page {
+    width: 240px;
+    height: 320px;
+    transform-origin: top left;
+    position: relative;
+    background: #000;
+}
+
+#tv {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 240px;
+    height: 320px;
+    border: 0;
+}
+
+#zoom {
+    position: fixed;
+    right: 2px;
+    top: 2px;
+    z-index: 9999;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    padding: 2px 4px;
+}
+
+#help {
+    position: fixed;
+    left: 2px;
+    bottom: 2px;
+    z-index: 9999;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 9px;
+    padding: 2px 4px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="page">
+
+    <iframe
+        id="tv"
+        src="https://tvgarden.world/tv/in"
+        allow="fullscreen"
+        allowfullscreen>
+    </iframe>
+
+</div>
+
+<div id="zoom">100%</div>
+
+<div id="help">
+    * +10% &nbsp; # -10%
+</div>
+
+<script>
+
+let zoom = 1.0;
+
+function applyZoom() {
+
+    document.getElementById("page").style.transform =
+        "scale(" + zoom + ")";
+
+    document.getElementById("zoom").textContent =
+        Math.round(zoom * 100) + "%";
+}
+
+function zoomIn() {
+
+    zoom = Math.min(
+        2.0,
+        +(zoom + 0.1).toFixed(1)
+    );
+
+    applyZoom();
+}
+
+function zoomOut() {
+
+    zoom = Math.max(
+        0.7,
+        +(zoom - 0.1).toFixed(1)
+    );
+
+    applyZoom();
+}
+
+document.addEventListener("keydown", function(e) {
+
+    if (e.key === "*") {
+        e.preventDefault();
+        zoomIn();
+    }
+
+    if (e.key === "#") {
+        e.preventDefault();
+        zoomOut();
+    }
+
+});
+
+applyZoom();
+
+</script>
+
+</body>
+</html>
