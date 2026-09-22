@@ -2,58 +2,84 @@
 <html>
 <head>
 <meta name="viewport" content="width=240,height=320,initial-scale=1,user-scalable=no">
-
 <title>TV Garden</title>
 
 <style>
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 240px;
-    height: 320px;
-    overflow: hidden;
-    background: #000;
+html,body{
+    margin:0;
+    padding:0;
+    width:240px;
+    height:320px;
+    overflow:hidden;
+    background:#fff;
+    font-family:Arial,sans-serif;
 }
 
-#page {
-    width: 240px;
-    height: 320px;
-    transform-origin: top left;
-    position: relative;
-    background: #000;
+#page{
+    width:240px;
+    height:320px;
+    transform-origin:top left;
 }
 
-#tv {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 240px;
-    height: 320px;
-    border: 0;
+.header{
+    height:38px;
+    background:#111;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    padding-left:8px;
+    font-size:16px;
+    font-weight:bold;
 }
 
-#zoom {
-    position: fixed;
-    right: 2px;
-    top: 2px;
-    z-index: 9999;
-    background: #000;
-    color: #fff;
-    font-family: Arial, sans-serif;
-    font-size: 10px;
-    padding: 2px 4px;
+.content{
+    height:244px;
+    padding:8px;
+    box-sizing:border-box;
 }
 
-#help {
-    position: fixed;
-    left: 2px;
-    bottom: 2px;
-    z-index: 9999;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    font-family: Arial, sans-serif;
-    font-size: 9px;
-    padding: 2px 4px;
+.title{
+    font-size:13px;
+    margin-bottom:8px;
+}
+
+.item{
+    width:224px;
+    height:42px;
+    box-sizing:border-box;
+    border:1px solid #888;
+    margin-bottom:6px;
+    padding:11px 7px;
+    font-size:13px;
+    background:#fff;
+}
+
+.item.selected{
+    background:#ddd;
+    border:2px solid #111;
+    padding:10px 6px;
+}
+
+.footer{
+    height:38px;
+    border-top:1px solid #aaa;
+    font-size:9px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding-left:7px;
+    box-sizing:border-box;
+}
+
+#zoom{
+    position:fixed;
+    right:2px;
+    top:2px;
+    background:#000;
+    color:#fff;
+    padding:2px 4px;
+    font-size:10px;
+    z-index:99;
 }
 </style>
 </head>
@@ -62,68 +88,164 @@ html, body {
 
 <div id="page">
 
-    <iframe
-        id="tv"
-        src="https://tvgarden.world/tv/in"
-        allow="fullscreen"
-        allowfullscreen>
-    </iframe>
+    <div class="header">
+        TV Garden
+    </div>
+
+    <div class="content">
+
+        <div class="title">
+            Select an option
+        </div>
+
+        <div class="item selected" id="item0">
+            ▶ India TV
+        </div>
+
+        <div class="item" id="item1">
+            All Channels
+        </div>
+
+        <div class="item" id="item2">
+            TV Garden Website
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <div>↑ ↓ Select &nbsp; Enter Open</div>
+        <div>* Zoom + &nbsp;&nbsp; # Zoom -</div>
+    </div>
 
 </div>
 
 <div id="zoom">100%</div>
 
-<div id="help">
-    * +10% &nbsp; # -10%
-</div>
-
 <script>
 
+let selected = 0;
 let zoom = 1.0;
 
-function applyZoom() {
+const items = [
+    "https://tvgarden.world/tv/in",
+    "https://tvgarden.world/",
+    "https://tvgarden.world/"
+];
 
-    document.getElementById("page").style.transform =
-        "scale(" + zoom + ")";
+function draw(){
 
-    document.getElementById("zoom").textContent =
-        Math.round(zoom * 100) + "%";
-}
+    for(let i=0;i<3;i++){
 
-function zoomIn() {
+        let el=document.getElementById("item"+i);
 
-    zoom = Math.min(
-        2.0,
-        +(zoom + 0.1).toFixed(1)
-    );
+        if(i===selected){
+            el.classList.add("selected");
+        }else{
+            el.classList.remove("selected");
+        }
 
-    applyZoom();
-}
-
-function zoomOut() {
-
-    zoom = Math.max(
-        0.7,
-        +(zoom - 0.1).toFixed(1)
-    );
-
-    applyZoom();
-}
-
-document.addEventListener("keydown", function(e) {
-
-    if (e.key === "*") {
-        e.preventDefault();
-        zoomIn();
     }
 
-    if (e.key === "#") {
+}
+
+function openSelected(){
+
+    window.location.href = items[selected];
+
+}
+
+function zoomIn(){
+
+    zoom=Math.min(
+        2.0,
+        +(zoom+0.1).toFixed(1)
+    );
+
+    applyZoom();
+
+}
+
+function zoomOut(){
+
+    zoom=Math.max(
+        0.7,
+        +(zoom-0.1).toFixed(1)
+    );
+
+    applyZoom();
+
+}
+
+function applyZoom(){
+
+    document.getElementById("page").style.transform =
+        "scale("+zoom+")";
+
+    document.getElementById("zoom").textContent =
+        Math.round(zoom*100)+"%";
+
+}
+
+document.addEventListener("keydown",function(e){
+
+    let k=e.key;
+    let c=e.keyCode;
+
+    /* UP */
+    if(k==="ArrowUp" || c===38){
+
+        e.preventDefault();
+
+        selected--;
+
+        if(selected<0)
+            selected=2;
+
+        draw();
+        return;
+    }
+
+    /* DOWN */
+    if(k==="ArrowDown" || c===40){
+
+        e.preventDefault();
+
+        selected++;
+
+        if(selected>2)
+            selected=0;
+
+        draw();
+        return;
+    }
+
+    /* ENTER */
+    if(k==="Enter" || c===13){
+
+        e.preventDefault();
+        openSelected();
+        return;
+    }
+
+    /* STAR */
+    if(k==="*" || c===106){
+
+        e.preventDefault();
+        zoomIn();
+        return;
+    }
+
+    /* HASH */
+    if(k==="#" || c===35){
+
         e.preventDefault();
         zoomOut();
+        return;
     }
 
 });
 
+draw();
 applyZoom();
 
 </script>
