@@ -23,6 +23,7 @@ var nowName=document.getElementById("nowName");
 var msg=document.getElementById("playMessage");
 
 var all=[],filtered=[],activeCat="all",focusIndex=-1,playingUrl="",buttons=[];
+var navMode="channels",categoryFocus=0,categoryButtons=[];
 var playRequest=0;
 var favs={};
 try{favs=JSON.parse(localStorage.getItem("rutik_tv_favs")||"{}")}catch(e){}
@@ -147,6 +148,7 @@ function render(){
     b.appendChild(strong);
     b.appendChild(small);
     b.onclick=function(){
+      navMode="channels";
       focusIndex=i;
       render();
       say("निवडले: "+ch.name+" · सुरू करण्यासाठी OK दाबा.");
@@ -278,16 +280,37 @@ function move(d){
   }
 }
 
-document.getElementById("categories").addEventListener("click",function(e){
-  var b=e.target.closest(".cat");
-  if(!b)return;
+var categoriesEl=document.getElementById("categories");
+categoryButtons=Array.prototype.slice.call(categoriesEl.querySelectorAll(".cat"));
+
+function paintCategoryFocus(){
+  categoryButtons.forEach(function(b,i){
+    b.classList.toggle("key-focused",navMode==="categories" && i===categoryFocus);
+  });
+  if(navMode==="categories" && categoryButtons[categoryFocus]){
+    categoryButtons[categoryFocus].scrollIntoView({block:"nearest",inline:"nearest"});
+  }
+}
+
+function activateCategory(index){
+  if(index<0||index>=categoryButtons.length)return;
+  categoryFocus=index;
+  var b=categoryButtons[index];
   activeCat=b.dataset.cat;
   focusIndex=-1;
-  Array.prototype.forEach.call(this.querySelectorAll(".cat"),function(x){
+  categoryButtons.forEach(function(x){
     x.classList.toggle("selected",x===b);
   });
   render();
+  paintCategoryFocus();
   say(activeCat==="all"?"सर्व चॅनेल्स":activeCat+" category");
+}
+
+categoriesEl.addEventListener("click",function(e){
+  var b=e.target.closest(".cat");
+  if(!b)return;
+  navMode="categories";
+  activateCategory(categoryButtons.indexOf(b));
 });
 
 document.getElementById("prev").onclick=function(){move(-1);};
@@ -312,16 +335,62 @@ video.addEventListener("error",function(){
 
 document.addEventListener("keydown",function(e){
   var tag=(document.activeElement&&document.activeElement.tagName||"").toLowerCase();
-  if(tag==="input")return;
-  if(["ArrowDown","8","PageDown","ArrowRight"].indexOf(e.key)>=0){
-    e.preventDefault();move(1);
-  }else if(["ArrowUp","2","PageUp","ArrowLeft"].indexOf(e.key)>=0){
-    e.preventDefault();move(-1);
-  }else if(e.key==="Enter"||e.key===" "){
+  var key=e.key;
+  var navKeys=["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","2","4","6","8","Enter"];
+
+  if(tag==="input" && navKeys.indexOf(key)<0 && key!=="Escape")return;
+  if(tag==="input" && navKeys.indexOf(key)>=0)document.activeElement.blur();
+
+  // LEFT / RIGHT किंवा 4 / 6 = Category bar.
+  if(key==="ArrowLeft"||key==="4"){
     e.preventDefault();
-    if(focusIndex<0&&filtered.length)focusIndex=0;
-    play(focusIndex);
-  }else if(e.key==="Escape"){
+    navMode="categories";
+    categoryFocus=Math.max(0,categoryFocus-1);
+    paintCategoryFocus();
+    say("Category: "+categoryButtons[categoryFocus].textContent+" · OK दाबून निवडा.");
+    return;
+  }
+  if(key==="ArrowRight"||key==="6"){
+    e.preventDefault();
+    navMode="categories";
+    categoryFocus=Math.min(categoryButtons.length-1,categoryFocus+1);
+    paintCategoryFocus();
+    say("Category: "+categoryButtons[categoryFocus].textContent+" · OK दाबून निवडा.");
+    return;
+  }
+
+  // UP ने category bar कडे जा; DOWN ने channel list मध्ये या.
+  if(key==="ArrowUp"||key==="2"){
+    e.preventDefault();
+    navMode="categories";
+    paintCategoryFocus();
+    say("Category निवडा: LEFT / RIGHT किंवा 4 / 6, नंतर OK.");
+    return;
+  }
+  if(key==="ArrowDown"||key==="8"){
+    e.preventDefault();
+    if(navMode==="categories"){
+      activateCategory(categoryFocus);
+      navMode="channels";
+      paintCategoryFocus();
+      say("Channel निवडा: UP / DOWN, नंतर OK.");
+    }else{
+      move(1);
+    }
+    return;
+  }
+
+  if(key==="Enter"||key===" "){
+    e.preventDefault();
+    if(navMode==="categories"){
+      activateCategory(categoryFocus);
+      navMode="channels";
+      paintCategoryFocus();
+    }else{
+      if(focusIndex<0&&filtered.length)focusIndex=0;
+      play(focusIndex);
+    }
+  }else if(key==="Escape"){
     playRequest++;
     video.pause();
     video.removeAttribute("src");
@@ -352,4 +421,4 @@ Promise.all(PLAYLISTS.map(function(url){
   say("Channel list load failed.");
 });
 })();
-    
+      
