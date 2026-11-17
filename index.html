@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#101827">
+<title>RUTIK LIVE TV</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><b>RUTIK <span>LIVE TV</span></b><small id="status">Starting…</small></header>
+<main>
+  <section class="screen">
+    <video id="video" controls playsinline preload="none"></video>
+    <div class="playing" id="playing">Select a channel</div>
+    <p id="notice">Press a channel button to start playback. Some public streams may be offline or restricted.</p>
+  </section>
+  <section class="tests">
+    <h2>Player test</h2>
+    <button id="test">▶ Test video (HLS)</button>
+    <button id="loadIndia">Load India channels</button>
+  </section>
+  <section class="browser">
+    <input id="search" type="search" placeholder="Search channel">
+    <select id="group"><option value="all">All groups</option></select>
+    <div id="channels"><p class="hint">Tap “Load India channels”.</p></div>
+  </section>
+</main>
+<footer>Channel streams are supplied by third parties. This app does not host or rebroadcast TV channels.</footer>
+<script src="app.js"></script>
+</body>
+</html>
