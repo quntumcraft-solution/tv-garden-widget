@@ -1,69 +1,75 @@
 (function(){
-var INDIA="https://iptv-org.github.io/iptv/countries/in.m3u";
-var TEST="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
-var video=document.getElementById("video"), list=document.getElementById("channels");
-var status=document.getElementById("status"), notice=document.getElementById("notice");
-var playing=document.getElementById("playing"), search=document.getElementById("search");
-var group=document.getElementById("group"), data=[];
-function msg(t){notice.textContent=t}
-function parseM3U(t){
+"use strict";
+var PLAYLIST="https://iptv-org.github.io/iptv/countries/in.m3u";
+var video=document.getElementById("video"), channelsBox=document.getElementById("channels");
+var search=document.getElementById("search"), cats=document.getElementById("categories");
+var count=document.getElementById("count"), shown=document.getElementById("shown");
+var nowName=document.getElementById("nowName"), playMessage=document.getElementById("playMessage");
+var all=[], filtered=[], current=-1, activeCat="all", buttons=[];
+function say(s){playMessage.textContent=s}
+function parse(text){
  var out=[],meta=null;
- t.replace(/\r/g,"").split("\n").forEach(function(line){
-  line=line.trim(); if(!line)return;
+ text.replace(/\r/g,"").split("\n").forEach(function(line){
+  line=line.trim();if(!line)return;
   if(line.indexOf("#EXTINF:")===0){
    var comma=line.lastIndexOf(",");
-   meta={name:comma>=0?line.slice(comma+1).trim():"TV channel",
+   meta={name:comma>=0?line.slice(comma+1).trim():"TV Channel",
     group:(line.match(/group-title="([^"]*)"/i)||[])[1]||"Other"};
-  }else if(line[0]!="#"&&meta){meta.url=line;out.push(meta);meta=null}
+  }else if(line.charAt(0)!=="#"&&meta){meta.url=line;out.push(meta);meta=null}
  });
  return out;
 }
-function play(ch){
- playing.textContent=ch.name;msg("Connecting…");
- video.pause();video.removeAttribute("src");video.load();
- video.src=ch.url;video.load();
- var p=video.play();
- if(p&&p.catch)p.catch(function(){msg("Playback did not start. Press Play on the video controls, or try another channel.")});
+function makeCategories(){
+ var groups={};all.forEach(function(c){groups[c.group]=1});
+ Object.keys(groups).sort().forEach(function(g){
+  var b=document.createElement("button");b.className="cat";b.dataset.cat=g;b.textContent=g.toUpperCase();
+  b.addEventListener("click",function(){activeCat=g;current=-1;markCat();render()});cats.appendChild(b);
+ });
 }
-video.addEventListener("playing",function(){msg("Video is playing.")});
-video.addEventListener("error",function(){var c=video.error?video.error.code:"unknown";msg("Stream error ("+c+"). This channel may be offline, restricted, or incompatible. Try another.")});
+function markCat(){Array.prototype.forEach.call(cats.querySelectorAll(".cat"),function(b){b.classList.toggle("selected",b.dataset.cat===activeCat)})}
 function render(){
- var q=search.value.toLowerCase(),g=group.value;
- var rows=data.filter(function(x){return x.name.toLowerCase().indexOf(q)>=0&&(g==="all"||x.group===g)});
- list.innerHTML="";
- if(!rows.length){list.innerHTML='<p class="hint">No channels found.</p>';return}
- rows.slice(0,300).forEach(function(ch){
-  var b=document.createElement("button");b.className="ch";b.type="button";
-  var strong=document.createElement("strong");strong.textContent=ch.name;
+ var q=search.value.toLowerCase();
+ filtered=all.filter(function(c){return (activeCat==="all"||c.group===activeCat)&&c.name.toLowerCase().indexOf(q)!==-1});
+ channelsBox.innerHTML="";buttons=[];
+ if(!filtered.length){channelsBox.innerHTML='<div class="hint">No matching channels. Try another category or search.</div>';shown.textContent="0";return}
+ filtered.forEach(function(ch,i){
+  var b=document.createElement("button");b.type="button";b.className="channel"+(i===current?" selected":"");
+  var strong=document.createElement("strong");strong.textContent=(i+1)+". "+ch.name;
   var small=document.createElement("small");small.textContent=ch.group;
-  b.appendChild(strong);b.appendChild(small);b.addEventListener("click",function(){play(ch)});
-  list.appendChild(b);
+  b.appendChild(strong);b.appendChild(small);
+  b.addEventListener("click",function(){playIndex(i)});
+  channelsBox.appendChild(b);buttons.push(b);
  });
+ shown.textContent=filtered.length+" found";
 }
-function loadIndia(){
- status.textContent="Loading playlist…";msg("Downloading the public India playlist…");
- fetch(INDIA,{cache:"no-store"}).then(function(r){if(!r.ok)throw Error("HTTP "+r.status);return r.text()})
- .then(function(t){
-  data=parseM3U(t);if(!data.length)throw Error("Playlist contained no channels");
-  var groups={};data.forEach(function(x){groups[x.group]=1});
-  group.innerHTML='<option value="all">All groups</option>';
-  Object.keys(groups).sort().forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;group.appendChild(o)});
-  render();status.textContent=data.length+" channels listed";msg("Choose a channel. Availability varies by stream.");
- }).catch(function(e){
-  status.textContent="Playlist could not load";
-  list.innerHTML='<p class="hint">The playlist could not be downloaded in this Cloud Browser. Error: '+String(e.message)+'. You can still test video playback above. This may be a browser CORS/network restriction.</p>';
-  msg("India channel list could not be fetched. The player test is separate.");
- });
+function playIndex(i){
+ if(!filtered.length)return;
+ if(i<0)i=filtered.length-1;if(i>=filtered.length)i=0;
+ current=i;var ch=filtered[current];
+ nowName.textContent=ch.name;say("Connecting to "+ch.name+"…");
+ render();
+ video.pause();video.removeAttribute("src");video.load();video.src=ch.url;video.load();
+ var p=video.play();if(p&&p.catch)p.catch(function(){say("Cannot autoplay this stream. Press ▶ on the video. If it fails, try NEXT channel.")});
+ if(buttons[current])buttons[current].scrollIntoView({block:"nearest"});
 }
-document.getElementById("test").addEventListener("click",function(){play({name:"HLS test stream",url:TEST})});
-document.getElementById("loadIndia").addEventListener("click",loadIndia);
-search.addEventListener("input",render);group.addEventListener("change",render);
+function step(d){if(!filtered.length)return;playIndex(current<0?(d>0?0:filtered.length-1):current+d)}
+video.addEventListener("playing",function(){say("LIVE · "+nowName.textContent)});
+video.addEventListener("waiting",function(){say("Buffering…")});
+video.addEventListener("error",function(){var code=video.error?video.error.code:"?";say("Stream unavailable / unsupported (error "+code+"). Press NEXT to try another channel.")});
+document.getElementById("prev").addEventListener("click",function(){step(-1)});
+document.getElementById("next").addEventListener("click",function(){step(1)});
+document.getElementById("clear").addEventListener("click",function(){search.value="";render();search.focus()});
+search.addEventListener("input",function(){current=-1;render()});
 document.addEventListener("keydown",function(e){
- var bs=[].slice.call(list.querySelectorAll("button.ch"));if(!bs.length)return;
- var i=bs.indexOf(document.activeElement);
- if(e.key==="ArrowDown"||e.key==="ArrowRight"){e.preventDefault();bs[(i+1+bs.length)%bs.length].focus()}
- if(e.key==="ArrowUp"||e.key==="ArrowLeft"){e.preventDefault();bs[(i<=0?bs.length-1:i-1)].focus()}
- if(e.key==="Enter"&&i>=0){e.preventDefault();bs[i].click()}
+ var tag=(document.activeElement&&document.activeElement.tagName||"").toLowerCase();
+ if(tag==="input"||tag==="select")return;
+ if(e.key==="ArrowDown"||e.key==="8"||e.key==="PageDown"){e.preventDefault();step(1)}
+ else if(e.key==="ArrowUp"||e.key==="2"||e.key==="PageUp"){e.preventDefault();step(-1)}
+ else if(e.key==="Enter"||e.key===" "){e.preventDefault();if(current>=0)playIndex(current);else step(1)}
+ else if(e.key==="ArrowLeft"){e.preventDefault();step(-1)}
+ else if(e.key==="ArrowRight"){e.preventDefault();step(1)}
 });
-status.textContent="Ready";
+fetch(PLAYLIST,{cache:"no-store"}).then(function(r){if(!r.ok)throw Error("HTTP "+r.status);return r.text()})
+.then(function(t){all=parse(t);if(!all.length)throw Error("No channel data");makeCategories();markCat();count.textContent=all.length+" channels";render();say("Choose a channel. ▲/▼ or 2/8 changes channels.")})
+.catch(function(err){count.textContent="Playlist error";channelsBox.innerHTML='<div class="hint">Could not load channel list: '+String(err.message)+'. Your Cloud Browser may block playlist access (CORS/network). Please send this screen to troubleshoot.</div>';say("Channel list failed to load.")});
 })();
