@@ -33,3 +33,5 @@ input{width:100%;min-width:0;background:#121e30;border:1px solid #334861;color:w
 .key-help{font-size:7px;color:#8298b2;text-align:center;padding:5px 1px 8px}
 footer{max-width:240px;margin:auto;padding:5px;color:#8297b1;font-size:7px}
 button:focus,input:focus{outline:2px solid #43ddc0;outline-offset:1px}
+
+.cat.key-focused{outline:2px solid #43ddc0;outline-offset:2px;background:#24506a;color:#fff}
