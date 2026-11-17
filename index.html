@@ -2,31 +2,44 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta name="theme-color" content="#101827">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#070b14">
 <title>RUTIK LIVE TV</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><b>RUTIK <span>LIVE TV</span></b><small id="status">Starting…</small></header>
+<header class="top">
+  <div class="logo">RUTIK <b>LIVE TV</b></div>
+  <div id="count" class="count">Loading…</div>
+</header>
+
 <main>
-  <section class="screen">
-    <video id="video" controls playsinline preload="none"></video>
-    <div class="playing" id="playing">Select a channel</div>
-    <p id="notice">Press a channel button to start playback. Some public streams may be offline or restricted.</p>
+  <section class="viewer">
+    <video id="video" controls autoplay playsinline preload="none"></video>
+    <div class="video-shade">
+      <div id="liveBadge" class="live-badge">● LIVE</div>
+      <div id="nowName" class="now-name">Choose a channel</div>
+      <div id="playMessage" class="play-message">Select a channel below</div>
+    </div>
+    <div class="zap-controls">
+      <button id="prev" aria-label="Previous channel">▲ PREV</button>
+      <button id="next" aria-label="Next channel">▼ NEXT</button>
+    </div>
   </section>
-  <section class="tests">
-    <h2>Player test</h2>
-    <button id="test">▶ Test video (HLS)</button>
-    <button id="loadIndia">Load India channels</button>
-  </section>
-  <section class="browser">
-    <input id="search" type="search" placeholder="Search channel">
-    <select id="group"><option value="all">All groups</option></select>
-    <div id="channels"><p class="hint">Tap “Load India channels”.</p></div>
+
+  <section class="browse">
+    <div class="search-row">
+      <input id="search" type="search" placeholder="Search channel name…" autocomplete="off">
+      <button id="clear" type="button">×</button>
+    </div>
+    <div id="categories" class="categories">
+      <button class="cat selected" data-cat="all">ALL</button>
+    </div>
+    <div class="list-head"><span>CHANNELS</span><span id="shown"></span></div>
+    <div id="channels" class="channels"><div class="hint">Loading Indian channels…</div></div>
+    <div class="key-help">KEYPAD: ▲ / ▼ or 2 / 8 = change channel · OK / ENTER = play</div>
   </section>
 </main>
-<footer>Channel streams are supplied by third parties. This app does not host or rebroadcast TV channels.</footer>
 <script src="app.js"></script>
 </body>
 </html>
