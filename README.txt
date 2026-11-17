@@ -1,11 +1,22 @@
-RUTIK LIVE TV v2
-1) Upload index.html, style.css and app.js to the ROOT of a GitHub repository.
-2) Open repository Settings > Pages.
-3) Under Build and deployment choose Deploy from a branch; branch main; folder /(root); Save.
-4) Wait for GitHub Pages to publish, then open the Pages URL in the itel Cloud Browser.
-5) Press "Test video (HLS)" first. If it plays, press "Load India channels".
-6) Tap a listed channel. Not every listed stream is guaranteed to work.
+RUTIK LIVE TV — fixed-category build
+Included categories:
+- Marathi
+- Hindi
+- News
+- Entertainment
+- Movies
+- Sports
+- Documentary & Lifestyle
+Also: All Channels, Favourites (saved in browser localStorage), Search.
+Excluded: English, Kids/Children/Cartoons, Devotional/Bhakti/Religious, Education/Learning, Music/Songs/Radio.
 
-This app uses a public playlist maintained by iptv-org. It does not host TV streams.
-Some browser environments may block playlist downloads due to CORS or network restrictions.
-Only use streams you are authorized to access. Public playlist entries may be offline, geo-restricted, or unsupported.
+Manual play behavior:
+- App opens without starting a channel.
+- Up/down (or 2/8) browses/highlights channels only.
+- OK/Enter or on-screen OK · PLAY starts the selected channel.
+- While a channel is playing, Up/down switches channel.
+- Escape stops playback.
+
+Install/update:
+Replace index.html, style.css, app.js in the ROOT of your GitHub Pages repository and commit changes.
+Important: category assignment is inferred from playlist metadata and channel names. Some channels may be uncategorized or imperfectly classified if the playlist metadata is incomplete. Streams may be offline, restricted, or unsupported. This site links third-party streams; it does not host them.
