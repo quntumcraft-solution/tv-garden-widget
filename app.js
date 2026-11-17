@@ -7,6 +7,10 @@
 
     var PLAYLIST = "https://iptv-org.github.io/iptv/countries/in.m3u";
 
+    // LOW QUALITY STREAM SETTINGS
+    var TARGET_HEIGHT = 240;
+    var TARGET_BANDWIDTH = 350000;
+
     var CATS = [
         "Marathi",
         "Hindi",
@@ -42,6 +46,7 @@
     var navMode = "channels";
 
     var favs = {};
+    var playRequest = 0;
 
     try {
         favs = JSON.parse(
@@ -50,6 +55,10 @@
     } catch (e) {
         favs = {};
     }
+
+    video.preload = "metadata";
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
 
 
     /* =================================
@@ -122,29 +131,19 @@
             ch.raw
         ).toLowerCase();
 
-        /* Excluded categories */
-
         if (/\b(english|eng|kids?|children|cartoon|devotional|bhakti|religious|education|educational|learning|music|songs?|radio)\b/.test(s)) {
             return [];
         }
 
         var cats = [];
 
-        if (/\b(marathi|mar)\b/.test(s)) {
-            cats.push("Marathi");
-        }
+        if (/\b(marathi|mar)\b/.test(s)) cats.push("Marathi");
 
-        if (/\b(hindi|hin)\b/.test(s)) {
-            cats.push("Hindi");
-        }
+        if (/\b(hindi|hin)\b/.test(s)) cats.push("Hindi");
 
-        if (/\b(news|news channel)\b/.test(s)) {
-            cats.push("News");
-        }
+        if (/\b(news|news channel)\b/.test(s)) cats.push("News");
 
-        if (/\b(movie|movies|cinema|film)\b/.test(s)) {
-            cats.push("Movies");
-        }
+        if (/\b(movie|movies|cinema|film)\b/.test(s)) cats.push("Movies");
 
         if (/\b(sport|sports|cricket|football|tennis|badminton)\b/.test(s)) {
             cats.push("Sports");
@@ -179,6 +178,189 @@
             .filter(function (ch) {
                 return ch.cats.length > 0;
             });
+
+    }
+
+
+    /* =================================
+       LOW QUALITY STREAM SELECTOR
+    ================================= */
+
+    function getAttribute(line, name) {
+
+        var re = new RegExp("(?:^|,)" + name + "=([^,]*)", "i");
+
+        var match = line.match(re);
+
+        return match
+            ? match[1].replace(/^"|"$/g, "")
+            : "";
+
+    }
+
+
+    function chooseLowQualityVariant(text, masterUrl) {
+
+        var lines = text.replace(/\r/g, "").split("\n");
+
+        var variants = [];
+
+        for (var i = 0; i < lines.length; i++) {
+
+            var line = lines[i].trim();
+
+            if (line.indexOf("#EXT-X-STREAM-INF:") !== 0) {
+                continue;
+            }
+
+            var uri = "";
+
+            for (var j = i + 1; j < lines.length; j++) {
+
+                var next = lines[j].trim();
+
+                if (next && next.charAt(0) !== "#") {
+                    uri = next;
+                    break;
+                }
+
+            }
+
+            if (!uri) continue;
+
+            var resolution = getAttribute(line, "RESOLUTION");
+
+            var height = 0;
+
+            if (resolution) {
+
+                var parts = resolution.toLowerCase().split("x");
+
+                height = parseInt(parts[1], 10) || 0;
+
+            }
+
+            var bandwidth = parseInt(
+                getAttribute(line, "AVERAGE-BANDWIDTH") ||
+                getAttribute(line, "BANDWIDTH"),
+                10
+            ) || 0;
+
+            try {
+                uri = new URL(uri, masterUrl).href;
+            } catch (e) {}
+
+            variants.push({
+                url: uri,
+                height: height,
+                bandwidth: bandwidth
+            });
+
+        }
+
+        if (!variants.length) return null;
+
+        // First preference: 240p or lower with low bitrate.
+
+        var eligible = variants.filter(function (v) {
+
+            return v.height > 0 &&
+                v.height <= TARGET_HEIGHT &&
+                (!v.bandwidth || v.bandwidth <= TARGET_BANDWIDTH);
+
+        });
+
+        if (eligible.length) {
+
+            eligible.sort(function (a, b) {
+
+                return (b.height - a.height) ||
+                    (b.bandwidth - a.bandwidth);
+
+            });
+
+            return eligible[0];
+
+        }
+
+        // If 240p is unavailable, choose the lowest resolution.
+
+        variants.sort(function (a, b) {
+
+            return (a.height || 99999) - (b.height || 99999) ||
+                (a.bandwidth || 999999999) -
+                (b.bandwidth || 999999999);
+
+        });
+
+        return variants[0];
+
+    }
+
+
+    function resolveStreamUrl(originalUrl) {
+
+        return fetch(originalUrl, {
+            cache: "no-store"
+        })
+
+        .then(function (response) {
+
+            if (!response.ok) {
+                throw new Error("Stream fetch failed");
+            }
+
+            return response.text();
+
+        })
+
+        .then(function (text) {
+
+            if (
+                text.indexOf("#EXTM3U") === -1 ||
+                text.indexOf("#EXT-X-STREAM-INF") === -1
+            ) {
+
+                return {
+                    url: originalUrl,
+                    quality: "Original Stream"
+                };
+
+            }
+
+            var variant = chooseLowQualityVariant(
+                text,
+                originalUrl
+            );
+
+            if (!variant) {
+
+                return {
+                    url: originalUrl,
+                    quality: "Original Stream"
+                };
+
+            }
+
+            return {
+                url: variant.url,
+                quality: variant.height
+                    ? variant.height + "p"
+                    : "Low Quality"
+            };
+
+        })
+
+        .catch(function () {
+
+            // If playlist cannot be read, use original stream.
+
+            return {
+                url: originalUrl,
+                quality: "Auto / Original"
+            };
+
+        });
 
     }
 
@@ -234,10 +416,12 @@
         navMode = "categories";
 
         categoryButtons.forEach(function (btn, i) {
+
             btn.classList.toggle(
                 "keyboard-focus",
                 i === categoryFocus
             );
+
         });
 
         var btn = categoryButtons[categoryFocus];
@@ -414,7 +598,7 @@
 
 
     /* =================================
-       CHANNEL PLAYBACK
+       CHANNEL PLAYBACK - 240p PRIORITY
     ================================= */
 
     function play(i) {
@@ -427,11 +611,13 @@
 
         var ch = filtered[i];
 
+        var requestId = ++playRequest;
+
         playingUrl = ch.url;
 
         nowName.textContent = ch.name;
 
-        say("Connecting…");
+        say("240p कमी Quality शोधत आहे…");
 
         render();
 
@@ -441,23 +627,37 @@
 
         video.load();
 
-        video.src = ch.url;
+        resolveStreamUrl(ch.url).then(function (result) {
 
-        video.load();
+            // Ignore old requests if user selects another channel.
 
-        var p = video.play();
+            if (requestId !== playRequest) return;
 
-        if (p && p.catch) {
+            say("Starting Stream · " + result.quality);
 
-            p.catch(function () {
+            video.src = result.url;
 
-                say(
-                    "Stream सुरू झाले नाही. Video वरील Play दाबा किंवा दुसरे channel निवडा."
-                );
+            video.load();
 
-            });
+            var p = video.play();
 
-        }
+            if (p && p.catch) {
+
+                p.catch(function () {
+
+                    if (requestId === playRequest) {
+
+                        say(
+                            "Stream सुरू झाले नाही. Video वरील Play दाबा किंवा दुसरे channel निवडा."
+                        );
+
+                    }
+
+                });
+
+            }
+
+        });
 
     }
 
@@ -566,7 +766,7 @@
 
     video.addEventListener("waiting", function () {
 
-        say("Buffering…");
+        say("Buffering… कमी Quality Stream वापरली जात आहे.");
 
     });
 
@@ -601,8 +801,6 @@
             document.activeElement.classList.contains("channel");
 
 
-        /* Search मध्ये टाइप करताना */
-
         if (tag === "input") {
 
             if (key === "Escape") {
@@ -613,8 +811,6 @@
 
         }
 
-
-        /* LEFT - मागील Category */
 
         if (key === "ArrowLeft" || key === "4") {
 
@@ -637,8 +833,6 @@
         }
 
 
-        /* RIGHT - पुढील Category */
-
         if (key === "ArrowRight" || key === "6") {
 
             e.preventDefault();
@@ -659,8 +853,6 @@
 
         }
 
-
-        /* UP - Category कडे जाणे किंवा मागील Channel */
 
         if (key === "ArrowUp" || key === "2") {
 
@@ -694,8 +886,6 @@
         }
 
 
-        /* DOWN - Channel कडे जाणे किंवा पुढील Channel */
-
         if (key === "ArrowDown" || key === "8") {
 
             e.preventDefault();
@@ -727,8 +917,6 @@
         }
 
 
-        /* OK / ENTER - Category किंवा Channel */
-
         if (key === "Enter" || key === " ") {
 
             e.preventDefault();
@@ -752,9 +940,9 @@
         }
 
 
-        /* ESC - Stop Playback */
-
         if (key === "Escape") {
+
+            playRequest++;
 
             video.pause();
 
