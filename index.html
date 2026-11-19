@@ -1,53 +1,178 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
 <meta name="theme-color" content="#070b14">
+
 <title>RUTIK LIVE TV</title>
+
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
 <header class="top">
-  <div class="logo">RUTIK <b>LIVE TV</b></div>
-  <div id="count" class="count">Loading…</div>
+
+  <div class="logo">
+    RUTIK <b>LIVE TV</b>
+  </div>
+
+  <div id="count" class="count">
+    Loading...
+  </div>
+
 </header>
+
 <main>
+
+  <!-- VIDEO PLAYER -->
+
   <section class="viewer">
-    <video id="video" controls playsinline preload="none"></video>
+
+    <video
+      id="video"
+      controls
+      playsinline
+      preload="none">
+    </video>
+
     <div class="video-shade">
+
       <div class="live-badge">● LIVE</div>
-      <div id="nowName" class="now-name">No channel playing</div>
-      <div id="playMessage" class="play-message">Browse channels, then press OK to play.</div>
+
+      <div id="nowName" class="now-name">
+        No channel playing
+      </div>
+
+      <div id="playMessage" class="play-message">
+        Select a channel and press OK to play.
+      </div>
+
     </div>
+
     <div class="zap-controls">
+
       <button id="prev" type="button">▲ PREV</button>
-      <button id="playSelected" type="button">OK · PLAY</button>
+
+      <button id="playSelected" type="button">
+        OK · PLAY
+      </button>
+
       <button id="next" type="button">▼ NEXT</button>
+
     </div>
+
   </section>
+
+
+  <!-- CHANNEL BROWSER -->
+
   <section class="browse">
+
+    <!-- SEARCH -->
+
     <div class="search-row">
-      <input id="search" type="search" placeholder="Search channel name…" autocomplete="off">
+
+      <input
+        id="search"
+        type="search"
+        placeholder="Search channel name..."
+        autocomplete="off">
+
       <button id="clear" type="button">×</button>
+
     </div>
-    <nav id="categories" class="categories" aria-label="Categories">
-      <button class="cat selected" data-cat="all">ALL CHANNELS</button>
-      <button class="cat" data-cat="Marathi">MARATHI</button>
-      <button class="cat" data-cat="Hindi">HINDI</button>
-      <button class="cat" data-cat="News">NEWS</button>
-      <button class="cat" data-cat="Entertainment">ENTERTAINMENT</button>
-      <button class="cat" data-cat="Movies">MOVIES</button>
-      <button class="cat" data-cat="Sports">SPORTS</button>
-      <button class="cat" data-cat="Documentary & Lifestyle">DOCUMENTARY & LIFESTYLE</button>
-      <button class="cat" data-cat="Favourites">♥ FAVOURITES</button>
+
+
+    <!-- CATEGORIES -->
+
+    <nav id="categories" class="categories">
+
+      <button class="cat selected" data-cat="all">
+        ALL CHANNELS
+      </button>
+
+      <button class="cat" data-cat="Marathi">
+        MARATHI
+      </button>
+
+      <button class="cat" data-cat="Hindi">
+        HINDI
+      </button>
+
+      <button class="cat" data-cat="News">
+        NEWS
+      </button>
+
+      <button class="cat" data-cat="Entertainment">
+        ENTERTAINMENT
+      </button>
+
+      <button class="cat" data-cat="Movies">
+        MOVIES
+      </button>
+
+      <button class="cat" data-cat="Sports">
+        SPORTS
+      </button>
+
+      <button class="cat" data-cat="Documentary & Lifestyle">
+        DOCUMENTARY
+      </button>
+
+      <button class="cat" data-cat="Favourites">
+        ♥ FAVOURITES
+      </button>
+
     </nav>
-    <div class="list-head"><span id="categoryTitle">ALL CHANNELS</span><span id="shown"></span></div>
-    <div id="channels" class="channels"><div class="hint">Loading approved categories…</div></div>
-    <div class="key-help">BROWSE: ▲ / ▼ or 2 / 8 · OK / ENTER = PLAY · WHILE PLAYING: ▲ / ▼ = CHANGE CHANNEL</div>
+
+
+    <!-- CHANNEL LIST HEADING -->
+
+    <div class="list-head">
+
+      <span id="categoryTitle">ALL CHANNELS</span>
+
+      <span id="shown"></span>
+
+    </div>
+
+
+    <!-- CHANNEL LIST -->
+
+    <div id="channels" class="channels">
+
+      <div class="hint">Loading channels...</div>
+
+    </div>
+
+
+    <!-- KEYPAD HELP -->
+
+    <div class="key-help">
+
+      UP / DOWN = CHANNEL<br>
+      LEFT / RIGHT = CATEGORY<br>
+      OK = PLAY<br>
+      5 / * = FAVOURITE<br>
+      0 = SEARCH<br>
+      ESC = STOP
+
+    </div>
+
   </section>
+
 </main>
-<footer>Only publicly listed streams are linked. Availability varies by channel and provider.</footer>
+
+<footer>
+  RUTIK LIVE TV
+</footer>
+
 <script src="app.js"></script>
+
 </body>
 </html>
